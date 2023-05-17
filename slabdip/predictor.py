@@ -264,7 +264,7 @@ class SlabDipper(object):
         # mask "negative" subduction rates
         subduction_convergence = np.asarray(subduction_data[:,2], dtype=float)*1e-2 * np.cos(np.deg2rad(np.asarray(subduction_data[:,3], dtype=float)))
         subduction_data = subduction_data[subduction_convergence >= 0]
-
+        
         subduction_lon         = np.asarray(subduction_data[:,0], dtype=float)
         subduction_lat         = np.asarray(subduction_data[:,1], dtype=float)
         subduction_vel         = np.asarray(subduction_data[:,2], dtype=float)*1e-2
@@ -273,13 +273,11 @@ class SlabDipper(object):
         subduction_pid_sub     = np.asarray(subduction_data[:,8], dtype=float)
         subduction_pid_over    = np.asarray(subduction_data[:,9], dtype=float)
         subduction_length      = np.deg2rad(np.asarray(subduction_data[:,6], dtype=float)) * gplately.EARTH_RADIUS * 1e3 # in metres
-        #subduction_convergence = np.fabs(subduction_data[:,2])*1e-2 * np.cos(np.deg2rad(subduction_data[:,3]))
-        #subduction_migration   = np.fabs(subduction_data[:,4])*1e-2 * np.cos(np.deg2rad(subduction_data[:,5]))
-        subduction_convergence = np.asarray(subduction_data[:,2], dtype=float)*1e-2 * np.cos(np.deg2rad(np.asarray(subduction_data[:,3], dtype=float)))
-        subduction_migration   = np.asarray(subduction_data[:,4], dtype=float)*1e-2 * np.cos(np.deg2rad(np.asarray(subduction_data[:,5], dtype=float)))
+        subduction_convergence = np.fabs(np.asarray(subduction_data[:,2], dtype=float))*1e-2 * np.cos(np.deg2rad(np.asarray(subduction_data[:,3], dtype=float)))
+        subduction_migration   = np.fabs(np.asarray(subduction_data[:,4], dtype=float))*1e-2 * np.cos(np.deg2rad(np.asarray(subduction_data[:,5], dtype=float)))
         subduction_normals = subduction_data[:,10]
         subduction_plate_vel   = np.asarray(subduction_data[:,11], dtype=float)*1e-2
-
+        #print(subduction_migration)
         # sample AgeGrid
         age_interp = self.sample_age_grid(subduction_lon, subduction_lat, time)
         thickness = gplately.tools.plate_isotherm_depth(age_interp)
@@ -291,11 +289,12 @@ class SlabDipper(object):
         vratio = (subduction_convergence + subduction_migration)/(subduction_convergence + 1e-22)
         vratio[subduction_plate_vel < 0] *= -1
         vratio = np.clip(vratio, 0.0, 1.0)
-        
+        #print('vratio', np.mean(vratio))
         subduction_flux = subduction_convergence*thickness
 
         # calculate density of the down-going plate
         rho_plate, delta_rho = self.calculate_plate_density(thickness, return_relative_density=True)
+        #print('rho plate', np.mean(rho_plate))
         
         # calculate trench curvature
         subduction_radius, segment_IDs, unique_segment_IDs = self.calculate_trench_curvature(
